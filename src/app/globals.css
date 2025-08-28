@@ -1,26 +1,123 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* VS Code-inspired Theme System */
+
+/* Black Theme (Default - like VS Code Dark) */
+:root,
+.black {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2d2d30;
+  --text-primary: #cccccc;
+  --text-secondary: #9d9d9d;
+  --text-muted: #6a6a6a;
+  --border-primary: #3e3e42;
+  --accent-blue: #007acc;
+  --accent-green: #4ec9b0;
+  --accent-orange: #ce9178;
+  --accent-red: #f44747;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Gray Theme */
+.gray {
+  --bg-primary: #2b2b2b;
+  --bg-secondary: #3c3c3c;
+  --bg-tertiary: #4d4d4d;
+  --text-primary: #d4d4d4;
+  --text-secondary: #b4b4b4;
+  --text-muted: #808080;
+  --border-primary: #5e5e5e;
+  --accent-blue: #4d9ef7;
+  --accent-green: #6ad3c7;
+  --accent-orange: #d4a574;
+  --accent-red: #f66;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* White Theme */
+.white {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f8f8;
+  --bg-tertiary: #f0f0f0;
+  --text-primary: #2d2d2d;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border-primary: #e1e1e1;
+  --accent-blue: #005fb8;
+  --accent-green: #008080;
+  --accent-orange: #a06100;
+  --accent-red: #d1242f;
+}
+
+/* Body and base styles */
+body {
+  font-feature-settings: "rlig" 1, "calt" 1;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: background-color 0.2s, color 0.2s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Improve mobile scrolling */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent zoom on input focus on iOS */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Improve touch targets for mobile */
+@media (max-width: 640px) {
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve mobile input experience */
+  input, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Better mobile scrolling */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Optimize animations for mobile */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-spin {
+    animation: none;
+  }
+  
+  .transition-all {
+    transition: none;
+  }
 }
+
+/* Simple animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+
+
