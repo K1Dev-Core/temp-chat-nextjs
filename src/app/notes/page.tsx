@@ -34,14 +34,21 @@ export default function NotesPage() {
 
     // Form state for new/editing note
     const [formData, setFormData] = useState({
-        title: '',
         content: '',
-        category: '',
         tags: [] as string[],
-        links: [] as string[],
-        tagInput: '',
-        linkInput: ''
+        customTag: ''
     });
+
+    // Predefined tags
+    const predefinedTags = [
+        'Web Application',
+        'Digital Forensic',
+        'Reverse Engineering & Pwnable',
+        'Network Security',
+        'Mobile Security',
+        'Programming',
+        'Cryptography'
+    ];
 
     useEffect(() => {
         // Get username from localStorage
@@ -103,18 +110,18 @@ export default function NotesPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.title.trim() || !formData.content.trim()) {
-            alert('Title and content are required');
+        if (!formData.content.trim()) {
+            alert('Content is required');
             return;
         }
 
         try {
             const noteData = {
-                title: formData.title,
+                title: formData.content.split('\n')[0].substring(0, 50) + (formData.content.length > 50 ? '...' : ''), // Auto-generate title from first line
                 content: formData.content,
-                category: formData.category || 'General',
+                category: 'General',
                 tags: formData.tags,
-                links: formData.links,
+                links: [],
                 author: username
             };
 
@@ -167,13 +174,9 @@ export default function NotesPage() {
 
     const resetForm = () => {
         setFormData({
-            title: '',
             content: '',
-            category: '',
             tags: [],
-            links: [],
-            tagInput: '',
-            linkInput: ''
+            customTag: ''
         });
         setShowNewNoteForm(false);
         setEditingNote(null);
@@ -181,24 +184,34 @@ export default function NotesPage() {
 
     const startEdit = (note: Note) => {
         setFormData({
-            title: note.title,
             content: note.content,
-            category: note.category,
             tags: [...note.tags],
-            links: [...note.links],
-            tagInput: '',
-            linkInput: ''
+            customTag: ''
         });
         setEditingNote(note);
         setShowNewNoteForm(true);
     };
 
-    const addTag = () => {
-        if (formData.tagInput.trim() && !formData.tags.includes(formData.tagInput.trim())) {
+    const togglePredefinedTag = (tag: string) => {
+        if (formData.tags.includes(tag)) {
             setFormData({
                 ...formData,
-                tags: [...formData.tags, formData.tagInput.trim()],
-                tagInput: ''
+                tags: formData.tags.filter(t => t !== tag)
+            });
+        } else {
+            setFormData({
+                ...formData,
+                tags: [...formData.tags, tag]
+            });
+        }
+    };
+
+    const addCustomTag = () => {
+        if (formData.customTag.trim() && !formData.tags.includes(formData.customTag.trim())) {
+            setFormData({
+                ...formData,
+                tags: [...formData.tags, formData.customTag.trim()],
+                customTag: ''
             });
         }
     };
@@ -207,23 +220,6 @@ export default function NotesPage() {
         setFormData({
             ...formData,
             tags: formData.tags.filter(tag => tag !== tagToRemove)
-        });
-    };
-
-    const addLink = () => {
-        if (formData.linkInput.trim() && !formData.links.includes(formData.linkInput.trim())) {
-            setFormData({
-                ...formData,
-                links: [...formData.links, formData.linkInput.trim()],
-                linkInput: ''
-            });
-        }
-    };
-
-    const removeLink = (linkToRemove: string) => {
-        setFormData({
-            ...formData,
-            links: formData.links.filter(link => link !== linkToRemove)
         });
     };
 
@@ -273,7 +269,7 @@ export default function NotesPage() {
                             </Link>
                             <div className="flex items-center space-x-2">
                                 <StickyNote className="w-6 h-6 text-blue-400" />
-                                <h1 className="text-xl font-semibold">Notes</h1>
+                                <h1 className="text-xl font-semibold">Quick Notes</h1>
                             </div>
                         </div>
 
@@ -282,7 +278,7 @@ export default function NotesPage() {
                             className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
                         >
                             <Plus className="w-5 h-5" />
-                            <span className="hidden sm:inline">New Note</span>
+                            <span className="hidden sm:inline">Quick Note</span>
                         </button>
                     </div>
                 </header>
@@ -302,17 +298,6 @@ export default function NotesPage() {
                         </div>
 
                         <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-gray-100 focus:border-blue-500 focus:outline-none"
-                        >
-                            <option value="">All Categories</option>
-                            {categories.map(category => (
-                                <option key={category} value={category}>{category}</option>
-                            ))}
-                        </select>
-
-                        <select
                             value={selectedTag}
                             onChange={(e) => setSelectedTag(e.target.value)}
                             className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-gray-100 focus:border-blue-500 focus:outline-none"
@@ -328,131 +313,93 @@ export default function NotesPage() {
                     {showNewNoteForm && (
                         <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
                             <h2 className="text-xl font-semibold mb-4">
-                                {editingNote ? 'Edit Note' : 'Create New Note'}
+                                {editingNote ? 'Edit Note' : 'Quick Note'}
                             </h2>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
-                                <div>
-                                    <input
-                                        type="text"
-                                        placeholder="Note title..."
-                                        value={formData.title}
-                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-                                        required
-                                    />
-                                </div>
-
+                                {/* Simple Text Area */}
                                 <div>
                                     <textarea
-                                        placeholder="Write your note content..."
+                                        placeholder="Write your note here..."
                                         value={formData.content}
                                         onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                        rows={6}
-                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none resize-y"
+                                        rows={8}
+                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none resize-y"
                                         required
                                     />
                                 </div>
 
+                                {/* Predefined Tags */}
                                 <div>
-                                    <input
-                                        type="text"
-                                        placeholder="Category (e.g., Work, Personal, Ideas)"
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-                                    />
-                                </div>
-
-                                {/* Tags */}
-                                <div>
-                                    <div className="flex gap-2 mb-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Add tags..."
-                                            value={formData.tagInput}
-                                            onChange={(e) => setFormData({ ...formData, tagInput: e.target.value })}
-                                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                                            className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={addTag}
-                                            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
-                                        >
-                                            <Tag className="w-5 h-5" />
-                                        </button>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {formData.tags.map(tag => (
-                                            <span
+                                    <label className="block text-sm font-medium text-gray-300 mb-3">Select Tags:</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                                        {predefinedTags.map(tag => (
+                                            <button
                                                 key={tag}
-                                                className="bg-blue-600 text-blue-100 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+                                                type="button"
+                                                onClick={() => togglePredefinedTag(tag)}
+                                                className={`px-3 py-2 text-sm rounded-lg border transition-colors text-left ${formData.tags.includes(tag)
+                                                        ? 'bg-blue-600 border-blue-500 text-white'
+                                                        : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                                                    }`}
                                             >
                                                 {tag}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeTag(tag)}
-                                                    className="hover:text-red-300 transition-colors"
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
 
-                                {/* Links */}
+                                {/* Custom Tag Input */}
                                 <div>
-                                    <div className="flex gap-2 mb-2">
+                                    <div className="flex gap-2">
                                         <input
-                                            type="url"
-                                            placeholder="Add links..."
-                                            value={formData.linkInput}
-                                            onChange={(e) => setFormData({ ...formData, linkInput: e.target.value })}
-                                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLink())}
-                                            className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                                            type="text"
+                                            placeholder="Add custom tag..."
+                                            value={formData.customTag}
+                                            onChange={(e) => setFormData({ ...formData, customTag: e.target.value })}
+                                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
+                                            className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
                                         />
                                         <button
                                             type="button"
-                                            onClick={addLink}
-                                            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
+                                            onClick={addCustomTag}
+                                            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
                                         >
-                                            <ExternalLink className="w-5 h-5" />
+                                            <Plus className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <div className="space-y-2">
-                                        {formData.links.map(link => (
-                                            <div
-                                                key={link}
-                                                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 flex items-center justify-between"
-                                            >
-                                                <a
-                                                    href={link}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-400 hover:text-blue-300 transition-colors truncate"
-                                                >
-                                                    {link}
-                                                </a>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeLink(link)}
-                                                    className="text-gray-400 hover:text-red-400 transition-colors ml-2"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
+
+                                {/* Selected Tags */}
+                                {formData.tags.length > 0 && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">Selected Tags:</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {formData.tags.map(tag => (
+                                                <span
+                                                    key={tag}
+                                                    className="bg-blue-600 text-blue-100 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+                                                >
+                                                    {tag}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeTag(tag)}
+                                                        className="hover:text-red-300 transition-colors"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="flex gap-3">
                                     <button
                                         type="submit"
                                         className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors"
                                     >
-                                        {editingNote ? 'Update Note' : 'Create Note'}
+                                        {editingNote ? 'Update Note' : 'Save Note'}
                                     </button>
                                     <button
                                         type="button"
@@ -472,7 +419,7 @@ export default function NotesPage() {
                             <div className="col-span-full text-center py-12 text-gray-400">
                                 <StickyNote className="w-16 h-16 mx-auto mb-4 text-gray-600" />
                                 <h3 className="text-lg font-medium mb-2">No notes found</h3>
-                                <p>Create your first note to get started!</p>
+                                <p>Create your first quick note to get started!</p>
                             </div>
                         ) : (
                             filteredNotes.map(note => (
@@ -504,13 +451,6 @@ export default function NotesPage() {
                                         {note.content}
                                     </p>
 
-                                    {note.category && (
-                                        <div className="flex items-center gap-1 mb-2">
-                                            <Hash className="w-4 h-4 text-gray-400" />
-                                            <span className="text-xs text-gray-400">{note.category}</span>
-                                        </div>
-                                    )}
-
                                     {note.tags.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mb-3">
                                             {note.tags.map(tag => (
@@ -520,23 +460,6 @@ export default function NotesPage() {
                                                 >
                                                     {tag}
                                                 </span>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {note.links.length > 0 && (
-                                        <div className="space-y-1 mb-3">
-                                            {note.links.map(link => (
-                                                <a
-                                                    key={link}
-                                                    href={link}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="block text-blue-400 hover:text-blue-300 text-xs truncate transition-colors"
-                                                >
-                                                    <ExternalLink className="w-3 h-3 inline mr-1" />
-                                                    {link}
-                                                </a>
                                             ))}
                                         </div>
                                     )}
