@@ -6,7 +6,8 @@ import MessageInput from '@/components/MessageInput';
 import MessageList from '@/components/MessageList';
 import Tutorial from '@/components/Tutorial';
 import { ThemeProvider } from '@/components/theme-provider';
-import { MessageCircle, Users, Zap, HelpCircle } from 'lucide-react';
+import { MessageCircle, Users, Zap, HelpCircle, StickyNote } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -317,6 +318,18 @@ export default function Home() {
                   }
                 }, formatNextExpiration()),
                 username && React.createElement('span', { className: 'hidden md:block text-sm', style: { color: 'var(--text-secondary)' } }, username),
+                React.createElement(Link, {
+                  href: '/notes',
+                  className: 'flex items-center space-x-1 p-1.5 sm:p-2 rounded-lg transition-all hover:opacity-70',
+                  style: {
+                    color: 'var(--text-muted)',
+                    border: '1px solid var(--border-primary)'
+                  },
+                  title: 'Open Notes'
+                },
+                  React.createElement(StickyNote, { className: 'w-3.5 h-3.5 sm:w-4 sm:h-4' }),
+                  React.createElement('span', { className: 'hidden sm:inline text-xs' }, 'Notes')
+                ),
                 React.createElement('button', {
                   onClick: () => setShowTutorial(true),
                   className: 'p-1.5 sm:p-2 rounded-lg transition-all hover:opacity-70',

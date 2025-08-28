@@ -22,15 +22,28 @@ export interface OnlineUser {
     joinedAt: number;
 }
 
+export interface Note {
+    id: string;
+    title: string;
+    content: string;
+    category: string;
+    tags: string[];
+    links: string[];
+    createdAt: number;
+    updatedAt: number;
+    author: string;
+}
+
 export interface Database {
     messages: Message[];
     onlineUsers: OnlineUser[];
+    notes: Note[];
 }
 
 export const readDatabase = (): Database => {
     try {
         if (!fs.existsSync(dbPath)) {
-            const initialDb: Database = { messages: [], onlineUsers: [] };
+            const initialDb: Database = { messages: [], onlineUsers: [], notes: [] };
             fs.writeFileSync(dbPath, JSON.stringify(initialDb, null, 2));
             return initialDb;
         }
@@ -42,10 +55,15 @@ export const readDatabase = (): Database => {
             db.onlineUsers = [];
         }
 
+        // Ensure notes array exists for backward compatibility
+        if (!db.notes) {
+            db.notes = [];
+        }
+
         return db;
     } catch (error) {
         console.error('Error reading database:', error);
-        return { messages: [], onlineUsers: [] };
+        return { messages: [], onlineUsers: [], notes: [] };
     }
 };
 
@@ -207,5 +225,145 @@ export const removeUserFromOnline = (userId: string): boolean => {
     } catch (error) {
         console.error('Error removing user from online:', error);
         return false;
+    }
+};
+
+// Notes Management
+export const addNote = (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Note | null => {
+    try {
+        const db = readDatabase();
+        const now = Date.now();
+        const newNote: Note = {
+            ...note,
+            id: Math.random().toString(36).substr(2, 9),
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        db.notes.push(newNote);
+
+        if (writeDatabase(db)) {
+            return newNote;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error adding note:', error);
+        return null;
+    }
+};
+
+export const getNotes = (): Note[] => {
+    try {
+        const db = readDatabase();
+        return db.notes.sort((a, b) => b.updatedAt - a.updatedAt); // Sort by most recently updated
+    } catch (error) {
+        console.error('Error getting notes:', error);
+        return [];
+    }
+};
+
+export const updateNote = (id: string, updates: Partial<Omit<Note, 'id' | 'createdAt' | 'updatedAt'>>): Note | null => {
+    try {
+        const db = readDatabase();
+        const noteIndex = db.notes.findIndex(note => note.id === id);
+
+        if (noteIndex === -1) {
+            return null;
+        }
+
+        db.notes[noteIndex] = {
+            ...db.notes[noteIndex],
+            ...updates,
+            updatedAt: Date.now(),
+        };
+
+        if (writeDatabase(db)) {
+            return db.notes[noteIndex];
+        }
+        return null;
+    } catch (error) {
+        console.error('Error updating note:', error);
+        return null;
+    }
+};
+
+export const deleteNote = (id: string): boolean => {
+    try {
+        const db = readDatabase();
+        const originalLength = db.notes.length;
+        db.notes = db.notes.filter(note => note.id !== id);
+
+        if (db.notes.length < originalLength) {
+            return writeDatabase(db);
+        }
+        return false;
+    } catch (error) {
+        console.error('Error deleting note:', error);
+        return false;
+    }
+};
+
+export const getNotesByCategory = (category: string): Note[] => {
+    try {
+        const db = readDatabase();
+        return db.notes
+            .filter(note => note.category === category)
+            .sort((a, b) => b.updatedAt - a.updatedAt);
+    } catch (error) {
+        console.error('Error getting notes by category:', error);
+        return [];
+    }
+};
+
+export const getNotesByTag = (tag: string): Note[] => {
+    try {
+        const db = readDatabase();
+        return db.notes
+            .filter(note => note.tags.includes(tag))
+            .sort((a, b) => b.updatedAt - a.updatedAt);
+    } catch (error) {
+        console.error('Error getting notes by tag:', error);
+        return [];
+    }
+};
+
+export const getAllCategories = (): string[] => {
+    try {
+        const db = readDatabase();
+        const categories = [...new Set(db.notes.map(note => note.category))];
+        return categories.filter(cat => cat && cat.trim() !== '');
+    } catch (error) {
+        console.error('Error getting categories:', error);
+        return [];
+    }
+};
+
+export const getAllTags = (): string[] => {
+    try {
+        const db = readDatabase();
+        const allTags = db.notes.flatMap(note => note.tags);
+        return [...new Set(allTags)].filter(tag => tag && tag.trim() !== '');
+    } catch (error) {
+        console.error('Error getting tags:', error);
+        return [];
+    }
+};
+
+export const searchNotes = (query: string): Note[] => {
+    try {
+        const db = readDatabase();
+        const lowerQuery = query.toLowerCase();
+
+        return db.notes
+            .filter(note =>
+                note.title.toLowerCase().includes(lowerQuery) ||
+                note.content.toLowerCase().includes(lowerQuery) ||
+                note.category.toLowerCase().includes(lowerQuery) ||
+                note.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+            )
+            .sort((a, b) => b.updatedAt - a.updatedAt);
+    } catch (error) {
+        console.error('Error searching notes:', error);
+        return [];
     }
 };
